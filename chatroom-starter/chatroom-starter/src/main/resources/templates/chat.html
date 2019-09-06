@@ -79,7 +79,12 @@
         /**
          * WebSocket client PS：URL shows WebSocket protocal, port number, and then end point.
          */
-        var webSocket = new WebSocket(/*[[${webSocketUrl}]]*/ 'ws://localhost:9000/chat');
+
+         var webSocket;
+         var host = document.location.host;
+         var pathname = document.location.pathname;
+         console.log(/*[[${username}]]*/);
+         webSocket = new WebSocket("ws://" +host  + pathname+"/"+ /*[[${username}]]*/);
         /**
          * websocket open connection.
          */
@@ -101,6 +106,7 @@
                     '<div class="mdui-card-primary">' +
                     '<div class="mdui-card-content message-content">' + message.username + "：" + message.msg + '</div>' +
                     '</div></div>');
+                    console.log(message.msg)
             }
             $('.chat-num').text(message.onlineCount);
             var $cards = $messageContainer.children('.mdui-card:visible').toArray();
@@ -109,6 +115,8 @@
                     index < $cards.length - 5 && $(item).slideUp('fast');
                 });
             }
+
+            console.log(message.msg)
         };
 
         /**
@@ -137,6 +145,7 @@
         var $message = $('#msg');
         if ($message.val()) {
             webSocket.send(JSON.stringify({username: $('#username').text(), msg: $message.val()}));
+            console.log($message.val())
             $message.val(null);
         }
     }

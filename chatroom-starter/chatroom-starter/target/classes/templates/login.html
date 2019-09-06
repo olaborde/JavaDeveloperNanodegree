@@ -154,12 +154,10 @@
     /**
      * Login
      */
-    function login() {
+   function login() {
         console.log("You tickled!");
         var name = document.getElementById("username").value;
         console.log("You tickled!"+ name);
-
-
         if (name.length == 0) {
             document.getElementById("error").innerHTML = "Username cannot be empty!";
         }
@@ -171,7 +169,7 @@
         }
         else{
         console.log("Stop!!");
-        window.location.href = "index?username="+name;
+        window.location.href = "chat?username="+name;
         }
         }
 

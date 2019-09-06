@@ -1,5 +1,6 @@
 package edu.udacity.java.nano.chat;
 
+import com.alibaba.fastjson.JSON;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -18,8 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 @Component
-@ServerEndpoint("/chat/{username}")
+@ServerEndpoint(value = "/chat/{username}",
+        decoders = MessageDecoder.class,
+        encoders = MessageEncoder.class)
 public class WebSocketChatServer {
+
+    public String theType;
 
     /**
      * All chat sessions.
@@ -27,21 +32,24 @@ public class WebSocketChatServer {
     private Session session;
     // This hashmap store all the new session for web socket client
     private static Map<String, Session> onlineSessions = new ConcurrentHashMap<>();
-    private static HashMap<String, String> users = new HashMap<>();
+//    private static HashMap<String, String> users = new HashMap<>();
 
     private static void sendMessageToAll(String msg, Session session) throws IOException, EncodeException{
+        if(session.isOpen()){
+            onlineSessions.forEach((k,v) ->{
 
-        onlineSessions.forEach((k,v) ->{
+                        try {
 
-                    try {
-                        session.getBasicRemote().sendObject(msg);
+                            session.getBasicRemote().sendObject(msg);
 
+                        }
+                        catch (IOException | EncodeException e){
+                            e.printStackTrace();
+                        }
                     }
-                    catch (IOException | EncodeException e){
-                        e.printStackTrace();
-                    }
+            );
         }
-        );
+
 
     }
 
@@ -49,11 +57,15 @@ public class WebSocketChatServer {
      * Open connection, 1) add session, 2) add user.
      */
     @OnOpen
-    public void onOpen(Session session, @PathParam("username") String username) throws IOException {
-        session.setMaxIdleTimeout(5 * 60 * 1000);
-        session.getUserProperties().putIfAbsent("username", username);
-        onlineSessions.put(username, session);
-        session.getBasicRemote().sendText("onOpen -- Welcome!");
+    public void onOpen(Session session, @PathParam("username") String username) throws IOException, EncodeException {
+        this.session = session;
+//        session.setMaxIdleTimeout(5 * 60 * 1000);
+//        session.getUserProperties().putIfAbsent("username", username);
+       // onlineSessions.put(username, this.session);
+//        session.getBasicRemote().sendText("onOpen -- Welcome!");
+        onlineSessions.put(session.getId(), session);
+        Message message = new Message("SPEAK", username, "Connected", onlineSessions.size());
+        broadcast(message);
 
     }
 
@@ -61,18 +73,19 @@ public class WebSocketChatServer {
      * Send message, 1) get username and session, 2) send message to all.
      */
     @OnMessage
-    public void onMessage(Session session, String jsonStr) {
+    public void onMessage(Session session, String jsonStr) throws EncodeException, IOException {
+//        Message message1 = new Message(message.setType("SPEAK"), message.getUsernmame(),message.getMessage(), onlineSessions.size());
+        Message message = new Message();
+        message.getUsernmame();
+        message.setType("SPEAK");
+        message.setMessage(jsonStr);
+        message.setOnlineCount(onlineSessions.size());
+        broadcast(message);
+//        broadcast(Message.jsonConverter(message));
+//        sendMessage(Message.jsonConverter(message));
+//        JSON.toJSONString(new Message(, username, message, onlineCount));
 
-        //create a new Message object from jsonstr
-        Message message = new Message(jsonStr);
-        // sendMessageToAll
-        try {
-            session.getBasicRemote().sendObject(message);
-            session.getBasicRemote().sendText(String.valueOf(message));
-        } catch (IOException | EncodeException e) {
-            e.printStackTrace();
-        }
-
+        //(String type, String username, String message, int onlineCount)
     }
 
     /**
@@ -85,8 +98,8 @@ public class WebSocketChatServer {
             onlineSessions.remove(this);
 
             Message message = new Message();
-            message.setUsernmame(users.get(session.getId()));
-            message.setOnlineCount(-1);
+//            message.setUsernmame(users.get(session.getId()));
+            message.setOnlineCount(onlineSessions.size()-1);
 
             session.close();
         }
@@ -105,6 +118,27 @@ public class WebSocketChatServer {
         error.printStackTrace();
     }
 
+    private void broadcast(Message message) throws IOException, EncodeException {
+        onlineSessions.forEach((endpoint, sess) -> {
+            synchronized (endpoint) {
+                try {
+
+                    session.getBasicRemote().
+                            sendObject(message);
+                } catch (IOException | EncodeException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void sendMessage(String message) {
+        try {
+            this.session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 }
