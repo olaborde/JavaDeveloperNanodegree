@@ -1,6 +1,7 @@
 package edu.udacity.java.nano.chat;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -21,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @ServerEndpoint(value = "/chat/{username}",
         decoders = MessageDecoder.class,
-        encoders = MessageEncoder.class)
+        encoders = MessageEncoder.class
+        )
 public class WebSocketChatServer {
 
     public String theType;
@@ -59,12 +61,8 @@ public class WebSocketChatServer {
     @OnOpen
     public void onOpen(Session session, @PathParam("username") String username) throws IOException, EncodeException {
         this.session = session;
-//        session.setMaxIdleTimeout(5 * 60 * 1000);
-//        session.getUserProperties().putIfAbsent("username", username);
-       // onlineSessions.put(username, this.session);
-//        session.getBasicRemote().sendText("onOpen -- Welcome!");
         onlineSessions.put(session.getId(), session);
-        Message message = new Message("SPEAK", username, "Connected", onlineSessions.size());
+        Message message = new Message( "SPEAK", username, "Joined", onlineSessions.size()+1);
         broadcast(message);
 
     }
@@ -72,20 +70,28 @@ public class WebSocketChatServer {
     /**
      * Send message, 1) get username and session, 2) send message to all.
      */
+    // Java objects to JSON --> toJSONString
+    // JSON to Java objects ==> parseObject
     @OnMessage
     public void onMessage(Session session, String jsonStr) throws EncodeException, IOException {
-//        Message message1 = new Message(message.setType("SPEAK"), message.getUsernmame(),message.getMessage(), onlineSessions.size());
-        Message message = new Message();
-        message.getUsernmame();
-        message.setType("SPEAK");
-        message.setMessage(jsonStr);
-        message.setOnlineCount(onlineSessions.size());
-        broadcast(message);
-//        broadcast(Message.jsonConverter(message));
-//        sendMessage(Message.jsonConverter(message));
-//        JSON.toJSONString(new Message(, username, message, onlineCount));
 
-        //(String type, String username, String message, int onlineCount)
+        Message message = new Message();
+        JSONObject text = JSON.parseObject(jsonStr);
+
+        message.setType("SPEAK");
+        message.setUsername(text.getString("username"));
+        message.setMessage(text.getString("msg"));
+        message.setOnlineCount(onlineSessions.size());
+
+
+
+
+       // se(Message.jsonConverter("SPEAK", message.getUsernmame(), message.getMessage(), onlineSessions.size() ));
+        broadcast(message);
+
+        for (Session sess: onlineSessions.values()) {
+            if (sess.isOpen()) { sess.getBasicRemote().sendObject(message); } }
+
     }
 
     /**
@@ -117,7 +123,8 @@ public class WebSocketChatServer {
     public void onError(Session session, Throwable error) {
         error.printStackTrace();
     }
-
+    // Java objects to JSON --> toJSONString
+    // JSON to Java objects ==> parseObject
     private void broadcast(Message message) throws IOException, EncodeException {
         onlineSessions.forEach((endpoint, sess) -> {
             synchronized (endpoint) {
@@ -125,6 +132,7 @@ public class WebSocketChatServer {
 
                     session.getBasicRemote().
                             sendObject(message);
+                    //sendMessage(JSON.toJSONString(message));
                 } catch (IOException | EncodeException e) {
                     e.printStackTrace();
                 }

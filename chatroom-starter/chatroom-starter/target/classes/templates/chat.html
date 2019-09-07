@@ -104,9 +104,9 @@
                 $messageContainer.append(
                     '<div class="mdui-card" style="margin: 10px 0;">' +
                     '<div class="mdui-card-primary">' +
-                    '<div class="mdui-card-content message-content">' + message.username + "：" + message.msg + '</div>' +
+                    '<div class="mdui-card-content message-content">' + message.username + "：" + message.message + '</div>' +
                     '</div></div>');
-                    console.log(message.msg)
+                    console.log("--->"+message.message)
             }
             $('.chat-num').text(message.onlineCount);
             var $cards = $messageContainer.children('.mdui-card:visible').toArray();
@@ -116,7 +116,7 @@
                 });
             }
 
-            console.log(message.msg)
+            console.log("****"+message.message)
         };
 
         /**

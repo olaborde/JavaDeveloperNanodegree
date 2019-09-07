@@ -17,11 +17,11 @@ public class MessageEncoder implements Encoder.Text<Message> {
 
     @Override
     public void init(EndpointConfig endpointConfig) {
-
+        System.out.println("Init");
     }
 
     @Override
     public void destroy() {
-
+        System.out.println("destroy");
     }
 }
