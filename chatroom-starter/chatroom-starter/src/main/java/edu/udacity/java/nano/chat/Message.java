@@ -10,16 +10,20 @@ public class Message  {
 
     private String type;
     private String username;
-    private String message;
+    private String msg;
     private int onlineCount;
 
     public Message(){}
 
-    public Message(String type, String username, String message, int onlineCount) {
+    public Message(String type, String username, String msg, int onlineCount) {
         this.type = type;
         this.username = username;
-        this.message = message;
+        this.msg = msg;
         this.onlineCount = onlineCount;
+    }
+
+    public Message(String username) {
+        this.username = username;
     }
 
     public String getType() {
@@ -38,12 +42,12 @@ public class Message  {
         this.username = username;
     }
 
-    public String getMessage() {
-        return message;
+    public String getMsg() {
+        return msg;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setMsg(String msg) {
+        this.msg = msg;
     }
 
     public int getOnlineCount() {
@@ -54,6 +58,6 @@ public class Message  {
         this.onlineCount = onlineCount;
     }
 
-    public static String jsonConverter(String type, String username, String message, int onlineCount) {
-        return JSON.toJSONString(new Message(type, username, message, onlineCount)); }
+    public static String jsonConverter(String type, String username, String msg, int onlineCount) {
+        return JSON.toJSONString(new Message(type, username, msg, onlineCount)); }
 }

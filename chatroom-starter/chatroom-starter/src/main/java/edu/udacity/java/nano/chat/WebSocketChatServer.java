@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
         )
 public class WebSocketChatServer {
 
-    public String theType;
 
     /**
      * All chat sessions.
@@ -34,24 +33,10 @@ public class WebSocketChatServer {
     private Session session;
     // This hashmap store all the new session for web socket client
     private static Map<String, Session> onlineSessions = new ConcurrentHashMap<>();
-//    private static HashMap<String, String> users = new HashMap<>();
 
-    private static void sendMessageToAll(String msg, Session session) throws IOException, EncodeException{
-        if(session.isOpen()){
-            onlineSessions.forEach((k,v) ->{
-
-                        try {
-
-                            session.getBasicRemote().sendObject(msg);
-
-                        }
-                        catch (IOException | EncodeException e){
-                            e.printStackTrace();
-                        }
-                    }
-            );
-        }
-
+    private static void sendMessageToAll(String msg) throws IOException, EncodeException{
+        for (Session sess: onlineSessions.values()) {
+            if (sess.isOpen()) { sess.getBasicRemote().sendText(msg); } }
 
     }
 
@@ -62,8 +47,9 @@ public class WebSocketChatServer {
     public void onOpen(Session session, @PathParam("username") String username) throws IOException, EncodeException {
         this.session = session;
         onlineSessions.put(session.getId(), session);
-        Message message = new Message( "SPEAK", username, "Joined", onlineSessions.size()+1);
-        broadcast(message);
+        //Message message = new Message( "SPEAK", username, "Joined", onlineSessions.size());
+        //broadcast(message);
+        sendMessageToAll(Message.jsonConverter("SPEAK", username, "Joined", onlineSessions.size()));
 
     }
 
@@ -80,14 +66,15 @@ public class WebSocketChatServer {
 
         message.setType("SPEAK");
         message.setUsername(text.getString("username"));
-        message.setMessage(text.getString("msg"));
+        message.setMsg(text.getString("msg"));
         message.setOnlineCount(onlineSessions.size());
 
 
 
 
        // se(Message.jsonConverter("SPEAK", message.getUsernmame(), message.getMessage(), onlineSessions.size() ));
-        broadcast(message);
+       // broadcast(message);
+        sendMessageToAll(message.toString());
 
         for (Session sess: onlineSessions.values()) {
             if (sess.isOpen()) { sess.getBasicRemote().sendObject(message); } }
@@ -140,13 +127,13 @@ public class WebSocketChatServer {
         });
     }
 
-    private void sendMessage(String message) {
-        try {
-            this.session.getBasicRemote().sendText(message);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    private void sendMessage(String message) {
+//        try {
+//            this.session.getBasicRemote().sendText(message);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 
 }
